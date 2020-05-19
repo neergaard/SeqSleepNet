@@ -2,7 +2,8 @@ clear all
 close all
 clc
 
-raw_data_path = './raw_data/';
+% raw_data_path = './raw_data/';
+raw_data_path = './data/h5/';
 mat_path = './mat/';
 if(~exist(mat_path, 'dir'))
     mkdir(mat_path);
@@ -14,21 +15,44 @@ overlap = 1;
 nfft = 2^nextpow2(win_size*fs);
 
 % list all subjects
-listing = dir([raw_data_path, 'SS*']);
+% listing = dir([raw_data_path, 'SS*']);
+listing = dir([raw_data_path, '*.h5']);
 
 for i = 1 : numel(listing)
 	disp(listing(i).name)
     
-    load([raw_data_path, listing(i).name]);
+%     load([raw_data_path, listing(i).name]);
+    data = h5read([raw_data_path, listing(i).name], '/data');
+    [M, N, C] = size(data);
+    data = double(reshape(data, [], size(data, 3), 1));
+    labels = h5read([raw_data_path, listing(i).name], '/hypnogram');
     [~, filename, ~] = fileparts(listing(i).name);
 
     % label and one-hot encoding
-    y = double(labels);
-    label = zeros(size(y,1),1);
-    for k = 1 : size(y,1)
-        [~, label(k)] = find(y(k,:));
+    label = double(labels);
+    y = zeros(size(label, 1), length(unique(label)));
+    for k = 1 : size(y, 1)
+        y(k, label(k)+1) = 1;
     end
+%     y = double(labels);
+%     label = zeros(size(y,1),1);
+%     for k = 1 : size(y,1)
+%         [~, label(k)] = find(y(k,:));
+%     end
     clear labels
+    
+    %% Resampling to 100 Hz and diffing EOG
+    % (N epochs, 30 s * 100 Hz, 3 channels)
+%     print('hej')
+    orig_fs = 128; % .h5 files are in 128 Hz format.
+    data_ = resample(data, fs, orig_fs);
+    data = zeros(size(data_, 1), 3);
+    data(:, 1) = data_(:, 1);
+    data(:, 2) = data_(:, 2) - data_(:, 3);
+    data(:, 3) = data_(:, 4);
+    data = reshape(data, [], N, 3);
+    data = permute(data, [2, 1, 3]);
+    clear data_
     
     %% EEG
     N = size(data, 1);

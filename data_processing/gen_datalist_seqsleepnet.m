@@ -5,10 +5,30 @@ clear all
 close all
 clc
 
-load('./data_split_eval.mat');
+
+%% Generate splits from csv files
+
+T = [importfile('data/csv/isruc.csv');
+     importfile('data/csv/mros.csv');
+     importfile('data/csv/shhs.csv');
+     importfile('data/csv/ssc.csv');
+     importfile('data/csv/wsc.csv')];
+N_train = sum(cellfun(@(x) strcmpi(x, 'train'), T.Partition));
+N_eval = sum(cellfun(@(x) strcmpi(x, 'eval'), T.Partition));
+N_test = sum(cellfun(@(x) strcmpi(x, 'test'), T.Partition));
+train_sub = cell(1, 1);
+eval_sub = cell(1, 1);
+test_sub = cell(1, 1);
+train_sub{1, 1} = find(cellfun(@(x) strcmpi(x, 'train'), T.Partition))';
+eval_sub{1, 1} = find(cellfun(@(x) strcmpi(x, 'eval'), T.Partition))';
+test_sub{1, 1} = find(cellfun(@(x) strcmpi(x, 'test'), T.Partition))';
+
+%%
+
+% load('./data_split_eval.mat');
 
 mat_path = './mat/';
-Nfold = 20;
+Nfold = 1;
 
 %% EEG
 listing = dir([mat_path, '*_seqsleepnet_eeg.mat']);
@@ -28,7 +48,11 @@ for s = 1 : Nfold
     train_filename = [tf_path, 'train_list_n', num2str(s),'.txt'];
     fid = fopen(train_filename,'wt');
     for i = 1 : numel(train_s)
-        sname = listing(train_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{train_s(i)}), '_seqsleepnet_eeg.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{train_s(i)}), '_seqsleepnet_eeg.mat'];
+%         sname = listing(train_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
@@ -40,7 +64,11 @@ for s = 1 : Nfold
     test_filename = [tf_path, 'test_list_n', num2str(s),'.txt'];
     fid = fopen(test_filename,'wt');
     for i = 1 : numel(test_s)
-        sname = listing(test_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{test_s(i)}), '_seqsleepnet_eeg.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{test_s(i)}), '_seqsleepnet_eeg.mat'];
+%         sname = listing(test_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
@@ -52,7 +80,11 @@ for s = 1 : Nfold
     eval_filename = [tf_path, 'eval_list_n', num2str(s),'.txt'];
     fid = fopen(eval_filename,'wt');
     for i = 1 : numel(eval_s)
-        sname = listing(eval_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{eval_s(i)}), '_seqsleepnet_eeg.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{eval_s(i)}), '_seqsleepnet_eeg.mat'];
+%         sname = listing(eval_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
@@ -81,7 +113,11 @@ for s = 1 : Nfold
     train_filename = [tf_path, 'train_list_n', num2str(s),'.txt'];
     fid = fopen(train_filename,'wt');
     for i = 1 : numel(train_s)
-        sname = listing(train_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{train_s(i)}), '_seqsleepnet_eog.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{train_s(i)}), '_seqsleepnet_eog.mat'];
+%         sname = listing(train_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
@@ -93,7 +129,11 @@ for s = 1 : Nfold
     test_filename = [tf_path, 'test_list_n', num2str(s),'.txt'];
     fid = fopen(test_filename,'wt');
     for i = 1 : numel(test_s)
-        sname = listing(test_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{test_s(i)}), '_seqsleepnet_eog.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{test_s(i)}), '_seqsleepnet_eog.mat'];
+%         sname = listing(test_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
@@ -105,7 +145,11 @@ for s = 1 : Nfold
     eval_filename = [tf_path, 'eval_list_n', num2str(s),'.txt'];
     fid = fopen(eval_filename,'wt');
     for i = 1 : numel(eval_s)
-        sname = listing(eval_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{eval_s(i)}), '_seqsleepnet_eog.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{eval_s(i)}), '_seqsleepnet_eog.mat'];
+%         sname = listing(eval_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
@@ -134,7 +178,11 @@ for s = 1 : Nfold
     train_filename = [tf_path, 'train_list_n', num2str(s),'.txt'];
     fid = fopen(train_filename,'wt');
     for i = 1 : numel(train_s)
-        sname = listing(train_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{train_s(i)}), '_seqsleepnet_eog.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{train_s(i)}), '_seqsleepnet_eog.mat'];
+%         sname = listing(train_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
@@ -146,7 +194,11 @@ for s = 1 : Nfold
     test_filename = [tf_path, 'test_list_n', num2str(s),'.txt'];
     fid = fopen(test_filename,'wt');
     for i = 1 : numel(test_s)
-        sname = listing(test_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{test_s(i)}), '_seqsleepnet_eog.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{test_s(i)}), '_seqsleepnet_eog.mat'];
+%         sname = listing(test_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
@@ -158,7 +210,11 @@ for s = 1 : Nfold
     eval_filename = [tf_path, 'eval_list_n', num2str(s),'.txt'];
     fid = fopen(eval_filename,'wt');
     for i = 1 : numel(eval_s)
-        sname = listing(eval_s(i)).name;
+%         if ~exist([mat_path, lower(T.FileID{eval_s(i)}), '_seqsleepnet_eog.mat'], 'file')
+%             continue;
+%         end
+        sname = [lower(T.FileID{eval_s(i)}), '_seqsleepnet_eog.mat'];
+%         sname = listing(eval_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
         file_path = ['../data_processing/mat/',sname];
