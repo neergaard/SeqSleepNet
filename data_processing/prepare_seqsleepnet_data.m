@@ -1,6 +1,8 @@
-clear all
-close all
-clc
+function prepare_seqsleepnet_data(n, n_tot);
+
+% clear all
+% close all
+% clc
 
 % raw_data_path = './raw_data/';
 raw_data_path = './data/h5/';
@@ -17,6 +19,10 @@ nfft = 2^nextpow2(win_size*fs);
 % list all subjects
 % listing = dir([raw_data_path, 'SS*']);
 listing = dir([raw_data_path, '*.h5']);
+n_listing = numel(listing);
+b = ceil(n_listing/n_tot);
+c = mat2cell(listing, diff([0:b:n_listing-1, n_listing]));
+listing = c{n};
 
 for i = 1 : numel(listing)
 	disp(listing(i).name)
@@ -111,4 +117,6 @@ for i = 1 : numel(listing)
     label=single(label);
     save([mat_path, filename,'_seqsleepnet_emg.mat'], 'X', 'label', 'y', '-v7.3');
     clear X y label
+end
+
 end

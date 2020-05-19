@@ -8,11 +8,11 @@ clc
 
 %% Generate splits from csv files
 
-T = [importfile('data/csv/isruc.csv');
-     importfile('data/csv/mros.csv');
-     importfile('data/csv/shhs.csv');
-     importfile('data/csv/ssc.csv');
-     importfile('data/csv/wsc.csv')];
+T = [importfile('./data/csv/isruc.csv');
+     importfile('./data/csv/mros.csv');
+     importfile('./data/csv/shhs.csv');
+     importfile('./data/csv/ssc.csv');
+     importfile('./data/csv/wsc.csv')];
 N_train = sum(cellfun(@(x) strcmpi(x, 'train'), T.Partition));
 N_eval = sum(cellfun(@(x) strcmpi(x, 'eval'), T.Partition));
 N_test = sum(cellfun(@(x) strcmpi(x, 'test'), T.Partition));
