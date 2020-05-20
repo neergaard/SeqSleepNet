@@ -8,11 +8,12 @@ clc
 
 %% Generate splits from csv files
 
-T = [importfile('./data/csv/isruc.csv');
-     importfile('./data/csv/mros.csv');
-     importfile('./data/csv/shhs.csv');
-     importfile('./data/csv/ssc.csv');
-     importfile('./data/csv/wsc.csv')];
+T = [importfile('./../data/csv/isruc.csv');
+     importfile('./../data/csv/mros.csv');
+     importfile('./../data/csv/shhs.csv');
+     importfile('./../data/csv/ssc.csv');
+     importfile('./../data/csv/wsc.csv')];
+T(find(~cellfun(@isempty, T.Skip)), :) = [];
 N_train = sum(cellfun(@(x) strcmpi(x, 'train'), T.Partition));
 N_eval = sum(cellfun(@(x) strcmpi(x, 'eval'), T.Partition));
 N_test = sum(cellfun(@(x) strcmpi(x, 'test'), T.Partition));
@@ -27,12 +28,12 @@ test_sub{1, 1} = find(cellfun(@(x) strcmpi(x, 'test'), T.Partition))';
 
 % load('./data_split_eval.mat');
 
-mat_path = './mat/';
+mat_path = './../mat/';
 Nfold = 1;
 
 %% EEG
 listing = dir([mat_path, '*_seqsleepnet_eeg.mat']);
-tf_path = './tf_data/seqsleepnet_eval_eeg/';
+tf_path = './../tf_data/seqsleepnet_eval_eeg/';
 if(~exist(tf_path, 'dir'))
     mkdir(tf_path);
 end
@@ -55,7 +56,7 @@ for s = 1 : Nfold
 %         sname = listing(train_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
@@ -71,7 +72,7 @@ for s = 1 : Nfold
 %         sname = listing(test_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
@@ -87,7 +88,7 @@ for s = 1 : Nfold
 %         sname = listing(eval_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
@@ -97,7 +98,7 @@ end
 
 %% EOG
 listing = dir([mat_path, '*_seqsleepnet_eog.mat']);
-tf_path = './tf_data/seqsleepnet_eval_eog/';
+tf_path = './../tf_data/seqsleepnet_eval_eog/';
 if(~exist(tf_path, 'dir'))
     mkdir(tf_path);
 end
@@ -120,7 +121,7 @@ for s = 1 : Nfold
 %         sname = listing(train_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
@@ -136,7 +137,7 @@ for s = 1 : Nfold
 %         sname = listing(test_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
@@ -152,7 +153,7 @@ for s = 1 : Nfold
 %         sname = listing(eval_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
@@ -162,7 +163,7 @@ end
 
 %% EMG
 listing = dir([mat_path, '*_seqsleepnet_emg.mat']);
-tf_path = './tf_data/seqsleepnet_eval_emg/';
+tf_path = './../tf_data/seqsleepnet_eval_emg/';
 if(~exist(tf_path, 'dir'))
     mkdir(tf_path);
 end
@@ -185,7 +186,7 @@ for s = 1 : Nfold
 %         sname = listing(train_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
@@ -201,7 +202,7 @@ for s = 1 : Nfold
 %         sname = listing(test_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
@@ -217,7 +218,7 @@ for s = 1 : Nfold
 %         sname = listing(eval_s(i)).name;
         load([mat_path,sname], 'label');
         num_sample = numel(label);
-        file_path = ['../data_processing/mat/',sname];
+        file_path = ['./../mat/',sname];
         fprintf(fid, '%s\t%d\n', file_path, num_sample);
     end
     fclose(fid);
