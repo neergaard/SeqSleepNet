@@ -4,13 +4,34 @@ import tensorflow.contrib.layers as layers
 from bnlstm import BNLSTMCell
 
 """
-Predefine all necessary layers for SeqSleepNet
+Predefine all necessary layers
 """
+def conv(x, filter_height, filter_width, num_filters, stride_y, stride_x, name, padding='SAME'):
+    # Get number of input channels
+    input_channels = int(x.get_shape()[-1])
+
+    # Create lambda function for the convolution
+    convolve = lambda i, k: tf.nn.conv2d(i, k,
+                                         strides=[1, stride_y, stride_x, 1],
+                                         padding=padding)
+    #with tf.device('/gpu:0'), tf.variable_scope(name) as scope:
+    with tf.variable_scope(name) as scope:
+        # Create tf variables for the weights and biases of the conv layer
+        weights = tf.get_variable('weights', shape=[filter_height, filter_width, input_channels, num_filters])
+        biases = tf.get_variable('biases', shape=[num_filters])
+
+        conv = convolve(x, weights)
+        # Add biases
+        bias = tf.nn.bias_add(conv, biases)
+        bias = tf.reshape(bias, tf.shape(conv))
+
+        # Apply relu function
+        relu = tf.nn.relu(bias, name=scope.name)
+        return relu
 
 
 def fc(x, num_in, num_out, name, relu=True):
-    #with tf.device('/gpu:0'), tf.variable_scope(name) as scope:
-    with tf.variable_scope(name) as scope:
+    with tf.variable_scope(name, reuse=tf.AUTO_REUSE) as scope:
         # Create tf variables for the weights and biases
         weights = tf.get_variable('weights', shape=[num_in, num_out])
         biases = tf.get_variable('biases', [num_out])
@@ -24,11 +45,19 @@ def fc(x, num_in, num_out, name, relu=True):
         else:
             return act
 
-# new version of tensorflow has the new way to create multiplayer RNN
+def max_pool(x, filter_height, filter_width, stride_y, stride_x, name, padding='SAME'):
+    return tf.nn.max_pool(x, ksize=[1, filter_height, filter_width, 1],
+                          strides=[1, stride_y, stride_x, 1],
+                          padding=padding, name=name)
+
+
+def dropout(x, keep_prob):
+    return tf.nn.dropout(x, keep_prob)
+
+
+# biRNN with batch-norm LSTM cell
 def bidirectional_recurrent_layer_bn_new(nhidden, nlayer, seq_len=1, is_training=False, input_keep_prob=1.0, output_keep_prob=1.0):
     if (nlayer == 1):
-        #fw_cell = tf.contrib.rnn.GRUCell(num_units=nhidden)
-        #bw_cell = tf.contrib.rnn.GRUCell(num_units=nhidden)
         fw_cell = BNLSTMCell(num_units=nhidden,
                              is_training_tensor=is_training,
                              max_bn_steps = seq_len)
@@ -36,19 +65,10 @@ def bidirectional_recurrent_layer_bn_new(nhidden, nlayer, seq_len=1, is_training
                              is_training_tensor=is_training,
                              max_bn_steps = seq_len)
     else:
-        # problem with the new version described here
-        # https://stackoverflow.com/questions/44615147/valueerror-trying-to-share-variable-rnn-multi-rnn-cell-cell-0-basic-lstm-cell-k
-        '''
-        fw_cell = tf.contrib.rnn.MultiRNNCell([fw_cell] * nlayer,
-                                              state_is_tuple=True)  # due to built with LN LSTM
-        bw_cell = tf.contrib.rnn.MultiRNNCell([bw_cell] * nlayer,
-                                              state_is_tuple=True)  # due to built with LN LSTM
-        '''
+
         fw_cell_ = []
         bw_cell_ = []
         for i in range(nlayer):
-            #fw_cell_.append(tf.contrib.rnn.GRUCell(num_units=nhidden))
-            #bw_cell_.append(tf.contrib.rnn.GRUCell(num_units=nhidden))
             fw_cell_i = BNLSTMCell(num_units=nhidden,
                              is_training_tensor=is_training,
                              max_bn_steps = seq_len)
@@ -60,28 +80,19 @@ def bidirectional_recurrent_layer_bn_new(nhidden, nlayer, seq_len=1, is_training
         fw_cell = tf.contrib.rnn.MultiRNNCell(cells=fw_cell_, state_is_tuple=True)
         bw_cell = tf.contrib.rnn.MultiRNNCell(cells=bw_cell_, state_is_tuple=True)
 
-
-        # input & output dropout
+    # input & output dropout
     fw_cell = tf.contrib.rnn.DropoutWrapper(fw_cell, input_keep_prob=input_keep_prob)
     fw_cell = tf.contrib.rnn.DropoutWrapper(fw_cell, output_keep_prob=output_keep_prob)
     bw_cell = tf.contrib.rnn.DropoutWrapper(bw_cell, input_keep_prob=input_keep_prob)
     bw_cell = tf.contrib.rnn.DropoutWrapper(bw_cell, output_keep_prob=output_keep_prob)
     return fw_cell,bw_cell
 
-# new version of tensorflow has the new way to create multiplayer RNN
+# biRNN with GRU cell
 def bidirectional_recurrent_layer_new(nhidden, nlayer, input_keep_prob=1.0, output_keep_prob=1.0):
     if (nlayer == 1):
         fw_cell = tf.contrib.rnn.GRUCell(num_units=nhidden)
         bw_cell = tf.contrib.rnn.GRUCell(num_units=nhidden)
     else:
-        # problem with the new version described here
-        # https://stackoverflow.com/questions/44615147/valueerror-trying-to-share-variable-rnn-multi-rnn-cell-cell-0-basic-lstm-cell-k
-        '''
-        fw_cell = tf.contrib.rnn.MultiRNNCell([fw_cell] * nlayer,
-                                              state_is_tuple=True)  # due to built with LN LSTM
-        bw_cell = tf.contrib.rnn.MultiRNNCell([bw_cell] * nlayer,
-                                              state_is_tuple=True)  # due to built with LN LSTM
-        '''
         fw_cell_ = []
         bw_cell_ = []
         for i in range(nlayer):
@@ -90,15 +101,14 @@ def bidirectional_recurrent_layer_new(nhidden, nlayer, input_keep_prob=1.0, outp
         fw_cell = tf.contrib.rnn.MultiRNNCell(cells=fw_cell_, state_is_tuple=True)
         bw_cell = tf.contrib.rnn.MultiRNNCell(cells=bw_cell_, state_is_tuple=True)
 
-
-        # input & output dropout
+    # input & output dropout
     fw_cell = tf.contrib.rnn.DropoutWrapper(fw_cell, input_keep_prob=input_keep_prob)
     fw_cell = tf.contrib.rnn.DropoutWrapper(fw_cell, output_keep_prob=output_keep_prob)
     bw_cell = tf.contrib.rnn.DropoutWrapper(bw_cell, input_keep_prob=input_keep_prob)
     bw_cell = tf.contrib.rnn.DropoutWrapper(bw_cell, output_keep_prob=output_keep_prob)
     return fw_cell,bw_cell
 
-# new version of tensorflow has the new way to create multiplayer RNN
+# biRNN's output
 def bidirectional_recurrent_layer_output_new(fw_cell, bw_cell, input_layer, sequence_len, scope=None):
     ((fw_outputs,
       bw_outputs),
@@ -142,40 +152,7 @@ def bidirectional_recurrent_layer_output_new(fw_cell, bw_cell, input_layer, sequ
 
 def attention(inputs, attention_size, time_major=False):
     """
-    Args:
-        inputs: The Attention inputs.
-            Matches outputs of RNN/Bi-RNN layer (not final state):
-                In case of RNN, this must be RNN outputs `Tensor`:
-                    If time_major == False (default), this must be a tensor of shape:
-                        `[batch_size, max_time, cell.output_size]`.
-                    If time_major == True, this must be a tensor of shape:
-                        `[max_time, batch_size, cell.output_size]`.
-                In case of Bidirectional RNN, this must be a tuple (outputs_fw, outputs_bw) containing the forward and
-                the backward RNN outputs `Tensor`.
-                    If time_major == False (default),
-                        outputs_fw is a `Tensor` shaped:
-                        `[batch_size, max_time, cell_fw.output_size]`
-                        and outputs_bw is a `Tensor` shaped:
-                        `[batch_size, max_time, cell_bw.output_size]`.
-                    If time_major == True,
-                        outputs_fw is a `Tensor` shaped:
-                        `[max_time, batch_size, cell_fw.output_size]`
-                        and outputs_bw is a `Tensor` shaped:
-                        `[max_time, batch_size, cell_bw.output_size]`.
-        attention_size: Linear size of the Attention weights.
-        time_major: The shape format of the `inputs` Tensors.
-            If true, these `Tensors` must be shaped `[max_time, batch_size, depth]`.
-            If false, these `Tensors` must be shaped `[batch_size, max_time, depth]`.
-            Using `time_major = True` is a bit more efficient because it avoids
-            transposes at the beginning and end of the RNN calculation.  However,
-            most TensorFlow data is batch-major, so by default this function
-            accepts input and emits output in batch-major form.
-    Returns:
-        The Attention output `Tensor`.
-        In case of RNN, this will be a `Tensor` shaped:
-            `[batch_size, cell.output_size]`.
-        In case of Bidirectional RNN, this will be a `Tensor` shaped:
-            `[batch_size, cell_fw.output_size + cell_bw.output_size]`.
+    Attention mechanism layer which reduces RNN/Bi-RNN outputs with Attention vector.
     """
 
     if isinstance(inputs, tuple):

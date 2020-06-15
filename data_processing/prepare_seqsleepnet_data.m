@@ -5,8 +5,8 @@ function prepare_seqsleepnet_data(n, n_tot);
 % clc
 
 % raw_data_path = './raw_data/';
-raw_data_path = './data/h5/';
-mat_path = './mat/';
+raw_data_path = './../data/h5/';
+mat_path = './../mat/';
 if(~exist(mat_path, 'dir'))
     mkdir(mat_path);
 end
@@ -20,8 +20,11 @@ nfft = 2^nextpow2(win_size*fs);
 % listing = dir([raw_data_path, 'SS*']);
 listing = dir([raw_data_path, '*.h5']);
 n_listing = numel(listing);
+disp(n_listing);
 b = ceil(n_listing/n_tot);
+disp(b);
 c = mat2cell(listing, diff([0:b:n_listing-1, n_listing]));
+disp(c);
 listing = c{n};
 
 for i = 1 : numel(listing)
@@ -36,7 +39,7 @@ for i = 1 : numel(listing)
 
     % label and one-hot encoding
     label = double(labels);
-    y = zeros(size(label, 1), length(unique(label)));
+    y = zeros(size(label, 1), 5);
     for k = 1 : size(y, 1)
         y(k, label(k)+1) = 1;
     end
